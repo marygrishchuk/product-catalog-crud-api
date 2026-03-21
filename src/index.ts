@@ -1,18 +1,9 @@
-import fastify from 'fastify'
 import 'dotenv/config'
+import { runApp } from './app.js'
 
-const server = fastify()
 const port = Number(process.env.PORT) || 4000
-const host = process.env.HOST || 'localhost'
+const host = process.env.HOST ?? '127.0.0.1'
 
-server.get('/ping', async (_request, _reply) => {
-  return 'pong\n'
-})
-
-server.listen({ port, host }, (err, address) => {
-  if (err) {
-    console.error(err)
-    process.exit(1)
-  }
-  console.log(`Server listening at ${address}`)
-})
+const app = await runApp()
+const address = await app.listen({ port, host })
+console.log(`Server listening at ${address}`)
