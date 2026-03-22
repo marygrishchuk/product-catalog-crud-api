@@ -1,7 +1,13 @@
 import { randomUUID } from 'node:crypto'
 import type { FastifyPluginAsync } from 'fastify'
 import { validate as isUuid } from 'uuid'
-import { productStore } from '../store/product-store.js'
+import {
+  storeCreate,
+  storeDelete,
+  storeGetAll,
+  storeGetById,
+  storeUpdate,
+} from '../store/product-store-access.js'
 import type { Product } from '../types/product.js'
 
 const productBodyJsonSchema = {
@@ -22,7 +28,7 @@ const schema = {
 
 export const productsApi: FastifyPluginAsync = async (fastify) => {
   fastify.get('/products', async (_request, reply) => {
-    return reply.code(200).send(productStore.getAll())
+    return reply.code(200).send(await storeGetAll())
   })
 
   fastify.get<{ Params: { id: string } }>(
@@ -34,7 +40,7 @@ export const productsApi: FastifyPluginAsync = async (fastify) => {
           message: 'Invalid product ID: must be a valid UUID',
         })
       }
-      const product = productStore.getById(id)
+      const product = await storeGetById(id)
       if (!product) {
         return reply.code(404).send({
           message: 'Product does not exist',
@@ -52,7 +58,7 @@ export const productsApi: FastifyPluginAsync = async (fastify) => {
         ...request.body,
         id: randomUUID(),
       }
-      productStore.create(product)
+      await storeCreate(product)
       return reply.code(201).send(product)
     },
   )
@@ -67,13 +73,13 @@ export const productsApi: FastifyPluginAsync = async (fastify) => {
           message: 'Invalid product ID: must be a valid UUID',
         })
       }
-      if (!productStore.getById(id)) {
+      if (!(await storeGetById(id))) {
         return reply.code(404).send({
           message: 'Product does not exist',
         })
       }
       const updated: Product = { id, ...request.body }
-      productStore.update(updated)
+      await storeUpdate(updated)
       return reply.code(200).send(updated)
     },
   )
@@ -87,12 +93,12 @@ export const productsApi: FastifyPluginAsync = async (fastify) => {
           message: 'Invalid product ID: must be a valid UUID',
         })
       }
-      if (!productStore.getById(id)) {
+      if (!(await storeGetById(id))) {
         return reply.code(404).send({
           message: 'Product does not exist',
         })
       }
-      productStore.delete(id)
+      await storeDelete(id)
       return reply.code(204).send()
     },
   )
