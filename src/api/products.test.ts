@@ -92,9 +92,9 @@ describe('POST /api/products', () => {
   const headers = { 'content-type': 'application/json' }
 
   const validPayload = {
-    name: 'Widget',
-    description: 'A useful widget',
-    price: 19.99,
+    name: 'MacBook',
+    description: 'A personal laptop by Apple',
+    price: 1999.99,
     category: 'electronics',
     inStock: true,
   }
@@ -153,6 +153,81 @@ describe('POST /api/products', () => {
       statusCode: 400,
       code: 'FST_ERR_VALIDATION',
       message: 'body/price must be > 0',
+    })
+  })
+})
+
+describe('PUT /api/products/:id', () => {
+  let app: FastifyInstance
+  const headers = { 'content-type': 'application/json' }
+  const id = 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11'
+  const existing = {
+    id,
+    name: 'Sherlock Holmes',
+    description: 'a book by Arthur Conan Doyle',
+    price: 10,
+    category: 'books',
+    inStock: true,
+  }
+  const updatePayload = {
+    name: 'Updated Sherlock Holmes',
+    description: 'Updated desc',
+    price: 29.99,
+    category: 'updated book',
+    inStock: false,
+  }
+
+  beforeEach(async () => {
+    resetProductStore()
+    app = await runApp()
+    await app.ready()
+  })
+
+  afterEach(async () => {
+    await app.close()
+  })
+
+  it('returns 200 and the updated product', async () => {
+    addProduct(existing)
+
+    const res = await app.inject({
+      method: 'PUT',
+      url: `/api/products/${id}`,
+      headers,
+      payload: updatePayload,
+    })
+
+    expect(res.statusCode).toBe(200)
+    expect(JSON.parse(res.body)).toEqual({ id, ...updatePayload })
+  })
+
+  it('returns 400 when id is not a valid UUID', async () => {
+    addProduct(existing)
+
+    const res = await app.inject({
+      method: 'PUT',
+      url: '/api/products/not-a-uuid',
+      headers,
+      payload: updatePayload,
+    })
+
+    expect(res.statusCode).toBe(400)
+    expect(JSON.parse(res.body)).toEqual({
+      message: 'Invalid product ID: must be a valid UUID',
+    })
+  })
+
+  it('returns 404 when id is valid but no product exists', async () => {
+    const res = await app.inject({
+      method: 'PUT',
+      url: '/api/products/00000000-0000-4000-8000-000000000000',
+      headers,
+      payload: updatePayload,
+    })
+
+    expect(res.statusCode).toBe(404)
+    expect(JSON.parse(res.body)).toEqual({
+      message: 'Product does not exist',
     })
   })
 })

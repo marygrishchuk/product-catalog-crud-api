@@ -13,6 +13,12 @@ export const productStore = {
   create: (product: Product): void => {
     addProduct(product)
   },
+  update: (product: Product): void => {
+    const index = products.findIndex((p) => p.id === product.id)
+    if (index >= 0) {
+      products[index] = product
+    }
+  },
 }
 
 export const resetProductStore = (): void => {

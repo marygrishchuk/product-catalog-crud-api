@@ -16,7 +16,7 @@ const productBodyJsonSchema = {
   },
 }
 
-const postProductSchema = {
+const schema = {
   body: productBodyJsonSchema,
 }
 
@@ -46,7 +46,7 @@ export const productsApi: FastifyPluginAsync = async (fastify) => {
 
   fastify.post<{ Body: Omit<Product, 'id'> }>(
     '/products',
-    { schema: postProductSchema },
+    { schema },
     async (request, reply) => {
       const product: Product = {
         ...request.body,
@@ -54,6 +54,27 @@ export const productsApi: FastifyPluginAsync = async (fastify) => {
       }
       productStore.create(product)
       return reply.code(201).send(product)
+    },
+  )
+
+  fastify.put<{ Params: { id: string }; Body: Omit<Product, 'id'> }>(
+    '/products/:id',
+    { schema },
+    async (request, reply) => {
+      const { id } = request.params
+      if (!isUuid(id)) {
+        return reply.code(400).send({
+          message: 'Invalid product ID: must be a valid UUID',
+        })
+      }
+      if (!productStore.getById(id)) {
+        return reply.code(404).send({
+          message: 'Product does not exist',
+        })
+      }
+      const updated: Product = { id, ...request.body }
+      productStore.update(updated)
+      return reply.code(200).send(updated)
     },
   )
 }
