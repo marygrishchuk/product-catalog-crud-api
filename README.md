@@ -4,6 +4,55 @@
 
 It's a simple CRUD API for a **Product Catalog** using an in-memory database underneath. It's using **Fastify** as the framework.
 
+## Setup
+
+1. **Install dependencies**
+
+   ```bash
+   npm install
+   ```
+
+2. **Environment**
+
+   Copy `.env.example` to `.env` and adjust values if needed (e.g. `PORT`, `HOST`).
+
+3. **Development**
+
+   Runs the app from TypeScript with reload on file changes (`nodemon` + `tsx`):
+
+   ```bash
+   npm run start:dev
+   ```
+
+4. **Build**
+
+   Compile TypeScript to `dist/`:
+
+   ```bash
+   npm run build
+   ```
+
+5. **Production**
+
+   Build and run the compiled app in one step:
+
+   ```bash
+   npm run start:prod
+   ```
+
+   Or build, then run `dist/` yourself:
+
+   ```bash
+   npm run build
+   npm run start
+   ```
+
+6. **Tests**
+
+   ```bash
+   npm run test
+   ```
+
 ## Technical requirements implemented
 
 - Task is implemented in TypeScript
