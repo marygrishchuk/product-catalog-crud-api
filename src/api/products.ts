@@ -77,4 +77,23 @@ export const productsApi: FastifyPluginAsync = async (fastify) => {
       return reply.code(200).send(updated)
     },
   )
+
+  fastify.delete<{ Params: { id: string } }>(
+    '/products/:id',
+    async (request, reply) => {
+      const { id } = request.params
+      if (!isUuid(id)) {
+        return reply.code(400).send({
+          message: 'Invalid product ID: must be a valid UUID',
+        })
+      }
+      if (!productStore.getById(id)) {
+        return reply.code(404).send({
+          message: 'Product does not exist',
+        })
+      }
+      productStore.delete(id)
+      return reply.code(204).send()
+    },
+  )
 }

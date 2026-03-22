@@ -231,3 +231,68 @@ describe('PUT /api/products/:id', () => {
     })
   })
 })
+
+describe('DELETE /api/products/:id', () => {
+  let app: FastifyInstance
+  const id = 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11'
+  const product = {
+    id,
+    name: 'Test',
+    description: 'Desc',
+    price: 9.99,
+    category: 'cat',
+    inStock: true,
+  }
+
+  beforeEach(async () => {
+    resetProductStore()
+    app = await runApp()
+    await app.ready()
+  })
+
+  afterEach(async () => {
+    await app.close()
+  })
+
+  it('returns 204 and removes the product when it exists', async () => {
+    addProduct(product)
+
+    const res = await app.inject({
+      method: 'DELETE',
+      url: `/api/products/${id}`,
+    })
+
+    expect(res.statusCode).toBe(204)
+    expect(res.body).toBe('')
+
+    const getRes = await app.inject({
+      method: 'GET',
+      url: `/api/products/${id}`,
+    })
+    expect(getRes.statusCode).toBe(404)
+  })
+
+  it('returns 400 when id is not a valid UUID', async () => {
+    const res = await app.inject({
+      method: 'DELETE',
+      url: '/api/products/not-a-uuid',
+    })
+
+    expect(res.statusCode).toBe(400)
+    expect(JSON.parse(res.body)).toEqual({
+      message: 'Invalid product ID: must be a valid UUID',
+    })
+  })
+
+  it('returns 404 when id is valid but no product exists', async () => {
+    const res = await app.inject({
+      method: 'DELETE',
+      url: '/api/products/00000000-0000-4000-8000-000000000000',
+    })
+
+    expect(res.statusCode).toBe(404)
+    expect(JSON.parse(res.body)).toEqual({
+      message: 'Product does not exist',
+    })
+  })
+})

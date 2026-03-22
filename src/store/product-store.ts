@@ -1,6 +1,6 @@
 import type { Product } from '../types/product.js'
 
-const products: Product[] = []
+let products: Product[] = []
 
 export const addProduct = (product: Product): void => {
   products.push(product)
@@ -18,6 +18,9 @@ export const productStore = {
     if (index >= 0) {
       products[index] = product
     }
+  },
+  delete: (id: string): void => {
+    products = products.filter((product) => product.id !== id)
   },
 }
 
