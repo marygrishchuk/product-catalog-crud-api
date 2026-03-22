@@ -1,6 +1,24 @@
+import { randomUUID } from 'node:crypto'
 import type { FastifyPluginAsync } from 'fastify'
 import { validate as isUuid } from 'uuid'
 import { productStore } from '../store/product-store.js'
+import type { Product } from '../types/product.js'
+
+const productBodyJsonSchema = {
+  type: 'object',
+  required: ['name', 'description', 'price', 'category', 'inStock'],
+  properties: {
+    name: { type: 'string' },
+    description: { type: 'string' },
+    price: { type: 'number', exclusiveMinimum: 0 },
+    category: { type: 'string' },
+    inStock: { type: 'boolean' },
+  },
+}
+
+const postProductSchema = {
+  body: productBodyJsonSchema,
+}
 
 export const productsApi: FastifyPluginAsync = async (fastify) => {
   fastify.get('/products', async (_request, reply) => {
@@ -23,6 +41,19 @@ export const productsApi: FastifyPluginAsync = async (fastify) => {
         })
       }
       return reply.code(200).send(product)
+    },
+  )
+
+  fastify.post<{ Body: Omit<Product, 'id'> }>(
+    '/products',
+    { schema: postProductSchema },
+    async (request, reply) => {
+      const product: Product = {
+        ...request.body,
+        id: randomUUID(),
+      }
+      productStore.create(product)
+      return reply.code(201).send(product)
     },
   )
 }

@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from '@jest/globals'
+import { validate as isUuid } from 'uuid'
 import { runApp } from '../app.js'
 import { addProduct, resetProductStore } from '../store/product-store.js'
 import type { FastifyInstance } from 'fastify'
@@ -83,5 +84,75 @@ describe('GET /api/products', () => {
 
     expect(res.statusCode).toBe(200)
     expect(JSON.parse(res.body)).toEqual(product)
+  })
+})
+
+describe('POST /api/products', () => {
+  let app: FastifyInstance
+  const headers = { 'content-type': 'application/json' }
+
+  const validPayload = {
+    name: 'Widget',
+    description: 'A useful widget',
+    price: 19.99,
+    category: 'electronics',
+    inStock: true,
+  }
+
+  beforeEach(async () => {
+    resetProductStore()
+    app = await runApp()
+    await app.ready()
+  })
+
+  afterEach(async () => {
+    await app.close()
+  })
+
+  it('returns 201 and the created product with a server-generated id', async () => {
+    const res = await app.inject({
+      method: 'POST',
+      url: '/api/products',
+      headers,
+      payload: validPayload,
+    })
+
+    expect(res.statusCode).toBe(201)
+    const body = JSON.parse(res.body) as typeof validPayload & { id: string }
+    expect(isUuid(body.id)).toBe(true)
+    expect(body).toEqual({ id: body.id, ...validPayload })
+  })
+
+  it('returns 400 when name is missing', async () => {
+    const { name: _omit, ...withoutName } = validPayload
+    const res = await app.inject({
+      method: 'POST',
+      url: '/api/products',
+      headers,
+      payload: withoutName,
+    })
+
+    expect(res.statusCode).toBe(400)
+    expect(JSON.parse(res.body)).toMatchObject({
+      statusCode: 400,
+      code: 'FST_ERR_VALIDATION',
+      message: "body must have required property 'name'",
+    })
+  })
+
+  it('returns 400 when price is 0', async () => {
+    const res = await app.inject({
+      method: 'POST',
+      url: '/api/products',
+      headers,
+      payload: { ...validPayload, price: 0 },
+    })
+
+    expect(res.statusCode).toBe(400)
+    expect(JSON.parse(res.body)).toMatchObject({
+      statusCode: 400,
+      code: 'FST_ERR_VALIDATION',
+      message: 'body/price must be > 0',
+    })
   })
 })

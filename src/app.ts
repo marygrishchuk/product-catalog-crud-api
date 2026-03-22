@@ -1,5 +1,5 @@
 import fastify from 'fastify'
-import { productsApi } from './routes/products.js'
+import { productsApi } from './api/products.js'
 
 export async function runApp() {
   const app = fastify()
